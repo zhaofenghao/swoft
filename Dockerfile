@@ -18,6 +18,8 @@ RUN apt-get update \
         wget \
         git \
         zip \
+	vim \
+	less \
         libz-dev \
         libssl-dev \
         libnghttp2-dev \
@@ -26,8 +28,9 @@ RUN apt-get update \
     && apt-get autoremove
 
 # Composer
-RUN curl -sS https://getcomposer.org/installer | php \
+RUN curl -sS https://install.phpcomposer.com/installer | php \
     && mv composer.phar /usr/local/bin/composer \
+    && composer config -g repo.packagist composer https://packagist.phpcomposer.com \
     && composer self-update --clean-backups
 
 # PDO extension
@@ -70,14 +73,17 @@ RUN wget https://github.com/swoole/swoole-src/archive/v${SWOOLE_VERSION}.tar.gz 
     && rm -r swoole \
     && docker-php-ext-enable swoole
 
-ADD . /var/www/swoft
+RUN docker-php-ext-install mysqli
 
-WORKDIR /var/www/swoft
+ADD . /opt/www/swoft
+
+WORKDIR /opt/www/swoft
 
 RUN composer install --no-dev \
     && composer dump-autoload -o \
     && composer clearcache
 
+ARG CACHEBUST=1
 EXPOSE 80
 
-ENTRYPOINT ["php", "/var/www/swoft/bin/swoft", "start"]
+ENTRYPOINT ["php", "/opt/www/swoft/bin/swoft", "start"]

@@ -15,6 +15,7 @@ return [
     'bootScan'     => [
         'App\Commands',
         'App\Boot',
+	'App\WebSocket',
     ],
     'excludeScan'  => [
 
