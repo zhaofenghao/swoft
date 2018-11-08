@@ -16,6 +16,8 @@ use Swoole\WebSocket\Server;
  */
 class EchoController implements HandlerInterface
 {
+
+    private $prefix = 'app:login:';
     /**
      * {@inheritdoc}
      */
@@ -40,7 +42,20 @@ class EchoController implements HandlerInterface
      */
     public function onMessage(Server $server, Frame $frame)
     {
-        $server->push($frame->fd, 'hello, I have received your message: ' . $frame->data);
+        $msg = $frame->data;
+        if (stripos($msg, 'logOut')) {
+            $phone = substr($msg,  0, strpos($msg, 'logOut'));
+            $fds = cache()->hgetall($this->prefix . $phone);
+            foreach ($fds as $val) {
+                $server->push($val, 'logOut');
+            }
+            cache()->del($this->prefix . $phone);
+        } else {
+            if ($frame->data != 'appheartbeat' && $frame->data != 'heartbeat') {
+                cache()->hset($this->prefix . $frame->data, time() , $frame->fd);
+                cache()->set($this->prefix . $frame->fd, $frame->data);
+            }
+        }
     }
 
     /**
@@ -50,5 +65,24 @@ class EchoController implements HandlerInterface
     public function onClose(Server $server, int $fd)
     {
         // do something. eg. record log, unbind user ...
+        $phone = cache()->get($this->prefix . $fd);
+        $fds = cache()->hgetall($this->prefix . $phone);
+        foreach ($fds as $key => $val) {
+            if ($val == $fd) {
+                cache()->hdel($this->prefix . $phone, $key);
+            }
+        }
+        cache()->del($this->prefix . $fd);
+    }
+
+    public function sendMessage(Server $server, int $fd, string $msg)
+    {
+        \Swoft::$server->sendToAll($msg);
+//        \Swoft::$server->sendToAll('');
+    }
+
+    public function sendTo(Server $server, int $fd, string $msg)
+    {
+        \Swoft::$server->sendTo($fd, $msg);
     }
 }

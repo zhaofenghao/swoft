@@ -11,8 +11,7 @@ return [
     'redis'     => [
         'name'        => 'redis',
         'uri'         => [
-            '127.0.0.1:6379',
-            '127.0.0.1:6379',
+            '192.168.0.235:8003',
         ],
         'minActive'   => 8,
         'maxActive'   => 8,
@@ -21,7 +20,7 @@ return [
         'maxIdleTime' => 60,
         'timeout'     => 8,
         'db'          => 1,
-        'prefix'      => 'redis_',
+        'prefix'      => '',
         'serialize'   => 0,
     ],
     'demoRedis' => [
